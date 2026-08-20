@@ -550,8 +550,8 @@ def is_adaptive_thinking_model(model: type_model_name) -> bool:
     ]
 
 
-def is_temperature_deprecated_model(model: type_model_name) -> bool:
-    """Models that must not receive the temperature parameter."""
+def is_sampling_parameters_deprecated_model(model: type_model_name) -> bool:
+    """Models that should not receive temperature, top_p, or top_k."""
     return model in [
         "claude-v5-sonnet",
     ]
@@ -1115,9 +1115,14 @@ def generation_params_to_converse_configuration(
         else:
             inference_config.pop("topP", None)
 
-    # Claude Sonnet 5 deprecates the temperature parameter.
-    if is_temperature_deprecated_model(model):
+    # Claude Sonnet 5 uses adaptive thinking and should not receive
+    # legacy sampling parameters.
+    if is_sampling_parameters_deprecated_model(model):
         converse_configuration["inferenceConfig"].pop("temperature", None)
+        converse_configuration["inferenceConfig"].pop("topP", None)
+
+        if "additionalModelRequestFields" in converse_configuration:
+            converse_configuration["additionalModelRequestFields"].pop("top_k", None)
 
     if guardrail and guardrail.guardrail_arn and guardrail.guardrail_version:
         converse_configuration["guardrailConfig"] = {
