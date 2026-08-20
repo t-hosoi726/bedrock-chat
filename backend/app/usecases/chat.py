@@ -47,7 +47,7 @@ from app.routes.schemas.conversation import (
 )
 from app.stream import ConverseApiStreamHandler, OnStopInput, OnThinking
 from app.usecases.bot import fetch_bot, modify_bot_last_used_time, modify_bot_stats
-from app.usecases.global_config import get_title_model
+from app.usecases.global_config import get_global_available_models, get_title_model
 from app.user import User
 from app.utils import get_current_time
 from app.vector_search import (
@@ -66,6 +66,12 @@ def prepare_conversation(
     user: User,
     chat_input: ChatInput,
 ) -> tuple[str, ConversationModel, BotModel | None]:
+    available_models = get_global_available_models()
+    if available_models and chat_input.message.model not in available_models:
+        raise ValueError(
+            f"Model '{chat_input.message.model}' is not currently available."
+        )
+
     current_time = get_current_time()
     bot = None
 
