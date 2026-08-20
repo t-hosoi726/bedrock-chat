@@ -171,7 +171,7 @@ Resources:
                   "cat cdk.json",
                   "npm ci",
                   "npx cdk bootstrap",
-                  "npx cdk deploy --require-approval never --all"
+                  "npx cdk deploy BedrockChatStack --exclusively --require-approval never"
                 ]
               }
             }
