@@ -58,6 +58,11 @@ const translation: typeof en = {
         description:
           'コーディング、コンピュータ使用、長文コンテキスト推論、エージェント計画が改善されたミッドティアモデルの完全アップグレード（1Mトークンコンテキストウィンドウ）。',
       },
+      'claude-v5-sonnet': {
+        label: 'Claude 5 (Sonnet)',
+        description:
+          'コーディング、AIエージェント、専門業務向けの最新Sonnetモデル。Adaptive Thinkingを常時使用し、1Mトークンのコンテキストウィンドウに対応。',
+      },
       'claude-v4.5-haiku': {
         label: 'Claude 4.5 (Haiku)',
         description:
