@@ -55,6 +55,11 @@ const translation = {
         description:
           'Full upgrade of the mid-tier model with improved coding, computer use, long-context reasoning, and agent planning with 1M token context window.',
       },
+      'claude-v5-sonnet': {
+        label: 'Claude 5 (Sonnet)',
+        description:
+          'Latest Sonnet model for coding, agents, and professional work with always-on adaptive thinking and a 1M token context window.',
+      },
       'claude-v4.5-haiku': {
         label: 'Claude 4.5 (Haiku)',
         description:

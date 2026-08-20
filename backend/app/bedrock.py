@@ -64,6 +64,7 @@ BASE_MODEL_IDS = {
     "claude-v4-sonnet": "anthropic.claude-sonnet-4-20250514-v1:0",
     "claude-v4.5-sonnet": "anthropic.claude-sonnet-4-5-20250929-v1:0",
     "claude-v4.6-sonnet": "anthropic.claude-sonnet-4-6",
+    "claude-v5-sonnet": "anthropic.claude-sonnet-5",
     "claude-v4.5-haiku": "anthropic.claude-haiku-4-5-20251001-v1:0",
     "claude-v3-haiku": "anthropic.claude-3-haiku-20240307-v1:0",
     "claude-v3-opus": "anthropic.claude-3-opus-20240229-v1:0",
@@ -146,6 +147,33 @@ GLOBAL_INFERENCE_PROFILES = {
         ]
     },
     "claude-v4.6-sonnet": {
+        "supported_regions": [
+            "us-west-2",
+            "us-west-1",
+            "us-east-2",
+            "us-east-1",
+            "sa-east-1",
+            "eu-west-3",
+            "eu-west-2",
+            "eu-west-1",
+            "eu-south-2",
+            "eu-south-1",
+            "eu-north-1",
+            "eu-central-2",
+            "eu-central-1",
+            "ca-central-1",
+            "ap-southeast-4",
+            "ap-southeast-3",
+            "ap-southeast-2",
+            "ap-southeast-1",
+            "ap-south-2",
+            "ap-south-1",
+            "ap-northeast-3",
+            "ap-northeast-2",
+            "ap-northeast-1",
+        ]
+    },
+    "claude-v5-sonnet": {
         "supported_regions": [
             "us-west-2",
             "us-west-1",
@@ -514,10 +542,18 @@ def is_tooluse_supported(model: type_model_name) -> bool:
 
 
 def is_adaptive_thinking_model(model: type_model_name) -> bool:
-    """Claude 4.6 models use adaptive thinking instead of extended thinking with budget_tokens."""
+    """Claude 4.6 and later models use adaptive thinking instead of extended thinking with budget_tokens."""
     return model in [
         "claude-v4.6-opus",
         "claude-v4.6-sonnet",
+        "claude-v5-sonnet",
+    ]
+
+
+def is_sampling_parameters_deprecated_model(model: type_model_name) -> bool:
+    """Models that should not receive temperature, top_p, or top_k."""
+    return model in [
+        "claude-v5-sonnet",
     ]
 
 
@@ -526,6 +562,7 @@ def is_prefill_supported(model: type_model_name) -> bool:
     return model not in [
         "claude-v4.6-opus",
         "claude-v4.6-sonnet",
+        "claude-v5-sonnet",
     ]
 
 
@@ -536,6 +573,7 @@ def is_specify_both_temperature_and_top_p_supported(model: type_model_name) -> b
         "claude-v4.6-opus",
         "claude-v4.5-sonnet",
         "claude-v4.6-sonnet",
+        "claude-v5-sonnet",
         "claude-v4.5-haiku",
     ]
 
@@ -552,6 +590,7 @@ def is_prompt_caching_supported(
             "claude-v4-sonnet",
             "claude-v4.5-sonnet",
             "claude-v4.6-sonnet",
+            "claude-v5-sonnet",
             "claude-v4.5-haiku",
             "claude-v3.7-sonnet",
             "claude-v3.5-sonnet-v2",
@@ -567,6 +606,7 @@ def is_prompt_caching_supported(
             "claude-v4-sonnet",
             "claude-v4.5-sonnet",
             "claude-v4.6-sonnet",
+            "claude-v5-sonnet",
             "claude-v4.5-haiku",
             "claude-v3.7-sonnet",
             "claude-v3.5-sonnet-v2",
@@ -1074,6 +1114,15 @@ def generation_params_to_converse_configuration(
             del inference_config["temperature"]
         else:
             inference_config.pop("topP", None)
+
+    # Claude Sonnet 5 uses adaptive thinking and should not receive
+    # legacy sampling parameters.
+    if is_sampling_parameters_deprecated_model(model):
+        converse_configuration["inferenceConfig"].pop("temperature", None)
+        converse_configuration["inferenceConfig"].pop("topP", None)
+
+        if "additionalModelRequestFields" in converse_configuration:
+            converse_configuration["additionalModelRequestFields"].pop("top_k", None)
 
     if guardrail and guardrail.guardrail_arn and guardrail.guardrail_version:
         converse_configuration["guardrailConfig"] = {
