@@ -542,10 +542,17 @@ def is_tooluse_supported(model: type_model_name) -> bool:
 
 
 def is_adaptive_thinking_model(model: type_model_name) -> bool:
-    """Claude 4.6 models use adaptive thinking instead of extended thinking with budget_tokens."""
+    """Claude 4.6 and later models use adaptive thinking instead of extended thinking with budget_tokens."""
     return model in [
         "claude-v4.6-opus",
         "claude-v4.6-sonnet",
+        "claude-v5-sonnet",
+    ]
+
+
+def is_temperature_deprecated_model(model: type_model_name) -> bool:
+    """Models that must not receive the temperature parameter."""
+    return model in [
         "claude-v5-sonnet",
     ]
 
@@ -1107,6 +1114,10 @@ def generation_params_to_converse_configuration(
             del inference_config["temperature"]
         else:
             inference_config.pop("topP", None)
+
+    # Claude Sonnet 5 deprecates the temperature parameter.
+    if is_temperature_deprecated_model(model):
+        converse_configuration["inferenceConfig"].pop("temperature", None)
 
     if guardrail and guardrail.guardrail_arn and guardrail.guardrail_version:
         converse_configuration["guardrailConfig"] = {
