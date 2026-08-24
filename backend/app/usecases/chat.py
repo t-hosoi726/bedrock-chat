@@ -214,6 +214,54 @@ def trace_to_root(
     return result[::-1]
 
 
+MAX_HISTORY_TURNS = 20
+
+
+def limit_message_history(
+    messages: list[SimpleMessageModel],
+    max_turns: int = MAX_HISTORY_TURNS,
+) -> list[SimpleMessageModel]:
+    """Limit conversation history sent to Bedrock while preserving system instructions.
+
+    A turn is counted by user messages. System and instruction messages are
+    always preserved. The full conversation remains stored in message_map.
+    """
+    if max_turns <= 0:
+        return messages
+
+    # Preserve root/system instructions separately.
+    prefix_messages = [
+        message
+        for message in messages
+        if message.role in ("system", "instruction")
+    ]
+
+    conversation_messages = [
+        message
+        for message in messages
+        if message.role not in ("system", "instruction")
+    ]
+
+    user_indexes = [
+        index
+        for index, message in enumerate(conversation_messages)
+        if message.role == "user"
+    ]
+
+    # No truncation is needed while the conversation is within the limit.
+    if len(user_indexes) <= max_turns:
+        return messages
+
+    # Start from the Nth most recent user message so we never begin
+    # halfway through an older assistant/tool interaction.
+    start_index = user_indexes[-max_turns]
+
+    return [
+        *prefix_messages,
+        *conversation_messages[start_index:],
+    ]
+
+
 def chat(
     user: User,
     chat_input: ChatInput,
@@ -317,6 +365,10 @@ def chat(
             SimpleMessageModel.from_message_model(message=message_map[user_msg_id]),
         )
         message_for_continue_generate = None
+
+    # Keep the complete conversation in storage, but limit the history
+    # included in each Bedrock request to control context size and cost.
+    messages = limit_message_history(messages)
 
     generation_params = bot.generation_params if bot else None
 
